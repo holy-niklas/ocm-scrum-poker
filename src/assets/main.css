@@ -1,0 +1,98 @@
+:root {
+	--black: oklch(0% 0 0);
+	--white: oklch(100% 0 0);
+	--dark-700: oklch(22.21% 0 0);
+	--red-600: oklch(57.71% 0.215 27.33);
+}
+
+html {
+	/* scrollbar-gutter: stable; */
+
+	/* https://www.mayank.co/notes/dialog-default-styles */
+	&:has(main[inert]) {
+		overflow: clip;
+	}
+}
+
+body {
+	color: var(--dark-700);
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+button,
+label,
+input,
+select,
+textarea,
+summary {
+	/* https://dbushell.com/2024/03/10/css-button-styles-you-might-not-know/#touch-actions */
+	touch-action: manipulation;
+}
+
+/* https://frontendmasters.com/blog/you-want-border-color-transparent-not-border-none/ */
+@media (forced-colors: active) {
+	button,
+	input,
+	textarea {
+		border: 1px solid transparent;
+	}
+}
+
+button {
+	background-color: unset; /* https://unocss.dev/guide/style-reset#tailwind */
+}
+
+[aria-disabled='true'] {
+	cursor: not-allowed;
+
+	&:active {
+		outline: none;
+	}
+}
+
+/* summary {
+	list-style: none;
+
+	&::-webkit-details-marker {
+		display: none;
+	}
+} */
+
+/* :is(th, td) {
+	padding: unset;
+} */
+
+dialog {
+	color: inherit;
+}
+
+:any-link {
+	text-decoration: underline;
+	text-underline-offset: 0.09375em;
+}
+
+:focus-visible,
+:where(button):active {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+:where([tabindex='-1']):focus {
+	outline: none;
+}
+
+button {
+	-webkit-tap-highlight-color: transparent;
+	background-color: unset; /* https://unocss.dev/guide/style-reset#tailwind */
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+}
+
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+	-webkit-appearance: none;
+}
