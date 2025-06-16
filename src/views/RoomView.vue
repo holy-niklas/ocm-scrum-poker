@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
 import { useStore } from '@/use/store'
+import { usePresence } from '@/use/presence'
 import type { Room } from '@/types/Room.type'
 import { PROVIDE_SQIDS } from '@/keys'
 import { injectStrict } from '@/use/helper'
@@ -10,14 +11,8 @@ const route = useRoute()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
 const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useStore()
-realtimeSubscribe()
 
-watch(
-	() => state.subscribed,
-	subscribed => {
-		if (subscribed) _getRoom()
-	},
-)
+realtimeSubscribe()
 onBeforeUnmount(() => {
 	realtimeUnsubscribe()
 })
@@ -28,6 +23,47 @@ const _getRoom = async () => {
 	await fetchEntries()
 	room.value = state.rooms.find(item => item.id === _roomId)
 }
+watch(
+	() => state.subscribed,
+	_subscribed => {
+		if (_subscribed) _getRoom()
+	},
+)
+
+const { joinChannel, leaveChannel, hasJoined, usersOnline } = usePresence()
+
+const _nameRestored = ref(false)
+const showForm = computed(() => !(_nameRestored.value || hasJoined.value))
+
+const name = ref(window.localStorage.getItem('ocmScrumPoker') ?? '')
+const _onNameRestored = () => {
+	if (!name.value) return
+	_nameRestored.value = true
+	try {
+		joinChannel(name.value)
+	} catch (error) {
+		console.error('Error joining channel.', error)
+	}
+}
+onBeforeMount(() => {
+	_onNameRestored()
+})
+
+const isSubmitLocked = ref(false)
+const onSubmitName = () => {
+	if (isSubmitLocked.value || !name.value) return
+	isSubmitLocked.value = true
+	try {
+		joinChannel(name.value)
+		window.localStorage.setItem('ocmScrumPoker', name.value)
+	} catch (error) {
+		console.error('Error joining channel / writing to local storage.', error)
+	}
+}
+
+onBeforeUnmount(() => {
+	leaveChannel()
+})
 </script>
 
 <template>
@@ -35,8 +71,18 @@ const _getRoom = async () => {
 		<pre class="text-xs">{{ state.rooms }}</pre>
 
 		<template v-if="room">
-			<h1 class="text-2xl font-bold">Raum {{ room.id }}</h1>
+			<h1 class="text-2xl font-bold">Room {{ room.id }}</h1>
 			<p>Erstellt am: {{ room.created_at }}</p>
+
+			<pre v-if="usersOnline.size" class="text-xs">{{ usersOnline }}</pre>
+
+			<form v-if="showForm" @submit.prevent="onSubmitName">
+				<div>
+					<label for="name">Stranger, what's your name?</label>
+					<input type="text" id="name" v-model.trim="name" />
+				</div>
+				<button type="submit">Ok</button>
+			</form>
 		</template>
 
 		<template v-else>

@@ -96,3 +96,16 @@ input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-decoration {
 	-webkit-appearance: none;
 }
+
+/* dev only */
+button {
+	background-color: oklch(0.73 0.13 210.82);
+	border: 1px solid currentColor;
+	padding: 0.25rem 0.5rem;
+}
+
+input {
+	background-color: oklch(0.92 0 0);
+	border: 1px solid currentColor;
+	padding: 0.25rem 0.5rem;
+}
