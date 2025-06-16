@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
 import { supabase } from './supabase'
 import { useStore } from './use/store'
 
-const { state, setAuthState } = useStore()
+const { setAuthState } = useStore()
 
 const logout = async () => {
 	try {

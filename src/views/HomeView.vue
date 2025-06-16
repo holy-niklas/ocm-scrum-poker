@@ -1,26 +1,22 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount } from 'vue'
-import HelloWorld from '../components/HelloWorld.vue'
+import { useRouter } from 'vue-router'
 import { useStore } from '@/use/store'
+import { PROVIDE_SQIDS } from '@/keys'
+import { injectStrict } from '@/use/helper'
 
-const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useStore()
-realtimeSubscribe()
+const router = useRouter()
 
-watch(
-	() => state.subscribed,
-	subscribed => {
-		if (subscribed) fetchEntries()
-	},
-)
+const sqids = injectStrict(PROVIDE_SQIDS)
+const { addEntry } = useStore()
 
-onBeforeUnmount(() => {
-	realtimeUnsubscribe()
-})
+const createRoom = async () => {
+	const { id } = await addEntry()
+	router.push({ name: 'view-room', params: { id: sqids.encode([id]) } })
+}
 </script>
 
 <template>
 	<main>
-		Hello world!
-		<HelloWorld msg="You did it!" />
+		<button type="button" @click="createRoom">Raum anlegen</button>
 	</main>
 </template>
