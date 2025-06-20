@@ -4,8 +4,9 @@ import { useRoute, type RouteParamValue } from 'vue-router'
 import { useStore } from '@/use/store'
 import { usePresence } from '@/use/presence'
 import type { Room } from '@/types/Room.type'
+import type { StoredUser } from '@/types/User.type'
 import { PROVIDE_SQIDS } from '@/keys'
-import { injectStrict } from '@/use/helper'
+import { injectStrict, createUuid, formatDate } from '@/use/helper'
 
 const route = useRoute()
 
@@ -35,12 +36,14 @@ const { joinChannel, leaveChannel, hasJoined, usersOnline } = usePresence()
 const _nameRestored = ref(false)
 const showForm = computed(() => !(_nameRestored.value || hasJoined.value))
 
-const name = ref(window.localStorage.getItem('ocmScrumPoker') ?? '')
+// @ts-expect-error JSON.parse(null) returns null
+const storedUser: StoredUser | null = JSON.parse(window.localStorage.getItem('ocmScrumPoker'))
+const name = ref(storedUser?.name ?? '')
 const _onNameRestored = () => {
-	if (!name.value) return
+	if (!storedUser) return
 	_nameRestored.value = true
 	try {
-		joinChannel(name.value)
+		joinChannel(storedUser)
 	} catch (error) {
 		console.error('Error joining channel.', error)
 	}
@@ -54,8 +57,9 @@ const onSubmitName = () => {
 	if (isSubmitLocked.value || !name.value) return
 	isSubmitLocked.value = true
 	try {
-		joinChannel(name.value)
-		window.localStorage.setItem('ocmScrumPoker', name.value)
+		const userData: StoredUser = { name: name.value, uuid: createUuid() }
+		joinChannel(userData)
+		window.localStorage.setItem('ocmScrumPoker', JSON.stringify(userData))
 	} catch (error) {
 		console.error('Error joining channel / writing to local storage.', error)
 	}
@@ -74,7 +78,14 @@ onBeforeUnmount(() => {
 			<h1 class="text-2xl font-bold">Room {{ room.id }}</h1>
 			<p>Erstellt am: {{ room.created_at }}</p>
 
-			<pre v-if="usersOnline.size" class="text-xs">{{ usersOnline }}</pre>
+			<template v-if="usersOnline.size">
+				<pre class="text-xs">{{ usersOnline }}</pre>
+				<ul>
+					<li v-for="[key, user] of usersOnline" :key="key">
+						{{ user.name }}: {{ formatDate(user.online_at, { time: true }) }}
+					</li>
+				</ul>
+			</template>
 
 			<form v-if="showForm" @submit.prevent="onSubmitName">
 				<div>

@@ -1,12 +1,12 @@
 import { ref, readonly } from 'vue'
 import { supabase } from '@/supabase'
-import type { UserOnline } from '@/types/User.type'
+import type { UserOnline, StoredUser } from '@/types/User.type'
 
 const hasJoined = ref(false)
 const usersOnline = ref<Map<string, UserOnline>>(new Map())
 
 const channel = supabase.channel('poker')
-const joinChannel = (name: string) => {
+const joinChannel = (userData: StoredUser) => {
 	channel
 		.on('presence', { event: 'sync' }, () => {
 			usersOnline.value.clear()
@@ -18,7 +18,7 @@ const joinChannel = (name: string) => {
 		.subscribe(async (status, error) => {
 			if (status === 'SUBSCRIBED') {
 				hasJoined.value = true
-				await channel.track({ name, online_at: new Date().toISOString() })
+				await channel.track({ ...userData, online_at: new Date().toISOString() })
 			}
 
 			if (error) throw error
