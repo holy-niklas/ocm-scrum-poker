@@ -1,0 +1,17 @@
+[[headers]]
+	for = "/*.(avif|css|jpeg|jpg|js|png|svg|webp|woff2)"
+	[headers.values]
+	Cache-Control = "public, max-age=31536000, immutable" # 12 months
+
+[[headers]]
+	for = "/*"
+	[headers.values]
+	Permissions-Policy = "interest-cohort=()"
+	Referrer-Policy = "strict-origin-when-cross-origin"
+	X-Content-Type-Options = "nosniff"
+	X-Frame-Options = "DENY"
+
+[[redirects]]
+	from = "/*"
+	to = "/index.html"
+	status = 200
