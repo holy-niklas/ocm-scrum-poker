@@ -2,21 +2,16 @@
 import { ref, useTemplateRef, watch, nextTick } from 'vue'
 import type { AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/supabase'
+import { useFormHandling } from '@/use/formHandling'
 import { isEmpty } from '@/use/helper'
+
+const { isSubmitLocked, beforeSubmit, handleSubmitError, unlockSubmit } = useFormHandling()
 
 const email = ref('')
 const passcode = ref('')
 watch(passcode, input => {
 	if (input.length === 6) onSubmit()
 })
-
-const isSubmitLocked = ref(false)
-const unlockSubmit = () => {
-	isSubmitLocked.value = false
-}
-const beforeSubmit = () => {
-	isSubmitLocked.value = true
-}
 
 const formEl = useTemplateRef('formEl')
 const isFirstStep = ref(true)
@@ -35,7 +30,6 @@ const _onSubmitEmail = async () => {
 	if (isSubmitLocked.value || isEmpty(email)) return
 
 	beforeSubmit()
-
 	try {
 		const { error } = await supabase.auth.signInWithOtp({
 			email: email.value,
@@ -45,8 +39,7 @@ const _onSubmitEmail = async () => {
 
 		isFirstStep.value = false
 	} catch (error) {
-		console.error(error)
-		unlockSubmit()
+		handleSubmitError(error)
 	}
 }
 
@@ -54,13 +47,11 @@ const _onSubmitCode = async () => {
 	if (isSubmitLocked.value || isEmpty(passcode)) return
 
 	beforeSubmit()
-
 	try {
 		const { error } = await supabase.auth.verifyOtp({ email: email.value, token: passcode.value, type: 'email' })
 		if (error) throw error
 	} catch (error) {
-		console.error(error)
-		unlockSubmit()
+		handleSubmitError(error)
 
 		if ((error as AuthError).code === 'otp_expired') {
 			isFirstStep.value = true

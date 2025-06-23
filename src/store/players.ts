@@ -31,12 +31,13 @@ const leaveChannel = async () => {
 }
 
 type BroadCastPayload = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any
 	type: `${REALTIME_LISTEN_TYPES.BROADCAST}`
 	event: string
 }
 const storyPoints = ref<Map<string, string>>(new Map())
-const onMessageReceived = ({ payload }: BroadCastPayload) => {
+const _onMessageReceived = ({ payload }: BroadCastPayload) => {
 	if (!payload.uuid || !payload.storyPoints) return
 
 	storyPoints.value.set(payload.uuid, payload.storyPoints)
@@ -44,7 +45,7 @@ const onMessageReceived = ({ payload }: BroadCastPayload) => {
 channel.on(
 	'broadcast',
 	{ event: 'shout' }, // listen for "shout". Can be "*" to listen to all events
-	payload => onMessageReceived(payload),
+	payload => _onMessageReceived(payload),
 )
 
 const vote = async (myStoryPoints: string) => {

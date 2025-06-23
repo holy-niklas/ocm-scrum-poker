@@ -7,12 +7,15 @@ import { usePlayerStore } from '@/store/players'
 import type { Room } from '@/types/Room.type'
 import type { StoredPlayer } from '@/types/Player.type'
 import { PROVIDE_SQIDS } from '@/keys'
-import { injectStrict, createUuid, formatDate } from '@/use/helper'
+import { useFormHandling } from '@/use/formHandling'
+import { injectStrict, createUuid, formatDate, isEmpty } from '@/use/helper'
 
 const route = useRoute()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
 const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useRoomStore()
+
+const { isSubmitLocked, beforeSubmit } = useFormHandling()
 
 realtimeSubscribe()
 onBeforeUnmount(() => {
@@ -53,12 +56,12 @@ onBeforeMount(() => {
 	_onNameRestored()
 })
 
-const isSubmitLocked = ref(false)
 const onSubmitName = () => {
-	if (isSubmitLocked.value || !name.value) return
-	isSubmitLocked.value = true
+	if (isSubmitLocked.value || isEmpty(name)) return
+
+	beforeSubmit()
 	try {
-		const userData: StoredPlayer = { name: name.value, uuid: createUuid() }
+		const userData: StoredPlayer = { name: name.value, uuid: state.authUser?.id ?? createUuid() }
 		joinChannel(userData)
 		window.localStorage.setItem('ocmScrumPoker', JSON.stringify(userData))
 	} catch (error) {
@@ -73,21 +76,15 @@ onBeforeUnmount(() => {
 
 <template>
 	<main>
-		<pre class="text-xs">{{ state.rooms }}</pre>
-
 		<template v-if="room">
 			<h1 class="text-2xl font-bold">Room {{ room.id }}</h1>
 			<p>Erstellt am: {{ room.created_at }}</p>
+			<pre class="text-xs">{{ room }}</pre>
 
 			<template v-if="playersOnline.size">
 				<PokerButtons />
 
-				<pre class="text-xs">{{ playersOnline }}</pre>
-				<!-- <ul>
-					<li v-for="[key, user] of playersOnline" :key="key">
-						{{ user.name }}: {{ formatDate(user.online_at, { time: true }) }}
-					</li>
-				</ul> -->
+				<!-- <pre class="text-xs">{{ playersOnline }}</pre> -->
 				<table>
 					<thead>
 						<tr>
@@ -97,13 +94,13 @@ onBeforeUnmount(() => {
 					</thead>
 
 					<tbody>
-						<tr v-for="[key, user] of playersOnline" :key="key">
+						<tr v-for="[key, player] of playersOnline" :key="key">
 							<td>
-								{{ user.name }}
-								<small>({{ formatDate(user.online_at, { time: true }) }})</small>
+								{{ player.name }} <span v-if="state.authUser?.id === player.uuid">⭐️</span>
+								<small>({{ formatDate(player.online_at, { time: true }) }})</small>
 							</td>
 							<td>
-								{{ storyPoints.get(user.uuid) }}
+								{{ storyPoints.get(player.uuid) }}
 							</td>
 						</tr>
 					</tbody>
@@ -115,7 +112,7 @@ onBeforeUnmount(() => {
 					<label for="name">Stranger, what's your name?</label>
 					<input type="text" id="name" v-model.trim="name" />
 				</div>
-				<button type="submit">Ok</button>
+				<button type="submit" :aria-disabled="isSubmitLocked">Ok</button>
 			</form>
 		</template>
 

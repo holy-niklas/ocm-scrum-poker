@@ -6,7 +6,7 @@ import { useRoomStore } from '@/store/rooms'
 
 const route = useRoute()
 const router = useRouter()
-const { state, setAuthState } = useRoomStore()
+const { isAuthenticated, setAuthState } = useRoomStore()
 
 const logout = async () => {
 	try {
@@ -18,20 +18,17 @@ const logout = async () => {
 }
 
 supabase.auth.onAuthStateChange((_, session) => {
-	setAuthState(session !== null)
+	setAuthState(session)
 })
 
-watch(
-	() => state.isAuthenticated,
-	async isLoggedIn => {
-		await router.isReady()
+watch(isAuthenticated, async isLoggedIn => {
+	await router.isReady()
 
-		if (isLoggedIn && route.name === 'login') {
-			router.replace((route.query.redirectTo as LocationQueryValue) ?? '/')
-			return
-		}
-	},
-)
+	if (isLoggedIn && route.name === 'login') {
+		router.replace((route.query.redirectTo as LocationQueryValue) ?? '/')
+		return
+	}
+})
 </script>
 
 <template>
@@ -40,7 +37,7 @@ watch(
 
 		<nav class="flex flex-wrap gap-x-2">
 			<RouterLink to="/">Home</RouterLink>
-			<button v-if="state.isAuthenticated" type="button" @click="logout">Logout</button>
+			<button v-if="isAuthenticated" type="button" @click="logout">Logout</button>
 			<RouterLink v-else to="/login">Login</RouterLink>
 		</nav>
 	</header>

@@ -1,19 +1,21 @@
-import { reactive, readonly } from 'vue'
-import type { RealtimePostgresUpdatePayload } from '@supabase/supabase-js'
+import { reactive, computed, readonly } from 'vue'
+import type { RealtimePostgresUpdatePayload, Session } from '@supabase/supabase-js'
 import { supabase } from '@/supabase'
 import type { Room } from '@/types/Room.type'
 
 const state = reactive<{
 	rooms: Room[]
 	subscribed: boolean
-	isAuthenticated: boolean
+	authUser: { id: string } | null
 }>({
 	rooms: [],
 	subscribed: false,
-	isAuthenticated: false,
+	authUser: null,
 })
 
-const _onUpdate = (payload: RealtimePostgresUpdatePayload<{ [key: string]: unknown }>) => {
+const isAuthenticated = computed(() => state.authUser !== null)
+
+const _onDatabaseUpdate = (payload: RealtimePostgresUpdatePayload<Room>) => {
 	const newEntry = payload.new as Room | null
 	if (!newEntry) return
 
@@ -27,7 +29,7 @@ const realtimeSubscribe = () => {
 
 	supabase
 		.channel('schema-db-changes')
-		.on('postgres_changes', { event: 'UPDATE', schema: 'public' }, _onUpdate)
+		.on('postgres_changes', { event: 'UPDATE', schema: 'public' }, _onDatabaseUpdate)
 		.subscribe((status, error) => {
 			if (status === 'SUBSCRIBED') state.subscribed = true
 			if (error) throw error
@@ -53,10 +55,10 @@ const fetchEntries = async () => {
 }
 
 const addEntry = async () => {
-	// if (!state.isAuthenticated) return
+	if (!state.authUser) return
 
 	try {
-		const { data, error } = await supabase.from('rooms').insert({}).select()
+		const { data, error } = await supabase.from('rooms').insert({ user_id: state.authUser.id }).select()
 		if (error) throw error
 		if (data === null) throw new Error('Verbindung zur Datenbank fehlgeschlagen.')
 		return data.at(0)
@@ -76,13 +78,14 @@ const addEntry = async () => {
 // 	}
 // }
 
-const setAuthState = (isAuthenticated = false) => {
-	state.isAuthenticated = isAuthenticated
+const setAuthState = (session: Session | null) => {
+	state.authUser = session !== null ? { id: session.user.id } : null
 }
 
 // Singleton State Pattern, see https://markus.oberlehner.net/blog/vue-composition-api-composables/#the-singleton-state-pattern
 export const useRoomStore = () => ({
 	state: readonly(state),
+	isAuthenticated,
 	realtimeSubscribe,
 	realtimeUnsubscribe,
 	fetchEntries,
