@@ -11,12 +11,12 @@ import type { StoryPointsTable } from '@/types/StoryPoints'
 import type { StoredPlayer } from '@/types/Player.type'
 
 const state = reactive<{
-	rooms: Room[]
+	room: Room | null | undefined
 	storyPoints: Map<StoryPointsTable['user_id'], StoryPointsTable['vote']>
 	subscribed: boolean
 	authUser: { id: string } | null
 }>({
-	rooms: [],
+	room: null,
 	storyPoints: new Map(),
 	subscribed: false,
 	authUser: null,
@@ -39,12 +39,13 @@ const _onDatabaseInsert = (payload: RealtimePostgresInsertPayload<StoryPointsTab
 const _onDatabaseUpdate = (payload: RealtimePostgresUpdatePayload<Room>) => {
 	if (payload.table !== 'rooms') return
 
-	const newEntry = payload.new as Room | null
-	if (!newEntry) return
+	const updatedEntry = payload.new as Room | null
+	if (!updatedEntry) return
 
-	const index = state.rooms.findIndex(room => room.id === newEntry.id)
-	if (index === -1) return
-	state.rooms[index] = newEntry
+	const isNewStory = (state.room?.version ?? 1) < updatedEntry.version
+	if (isNewStory) state.storyPoints.clear()
+
+	state.room = updatedEntry
 }
 
 const realtimeSubscribe = () => {
@@ -65,16 +66,21 @@ const realtimeUnsubscribe = async () => {
 	if (status === 'ok') state.subscribed = false
 }
 
-const fetchRooms = async () => {
+const fetchRoom = async (roomId?: number) => {
+	if (roomId === undefined) {
+		state.room = undefined
+		return
+	}
+
 	try {
 		const { data, error /* , status */ }: PostgrestSingleResponse<Room[]> = await supabase
 			.from('rooms')
 			.select()
-			.order('id', { ascending: true })
+			.eq('id', roomId)
 		if (error) throw error
 		if (data === null) throw new Error('Verbindung zur Datenbank fehlgeschlagen.')
 
-		state.rooms = data
+		state.room = data.at(0)
 	} catch (error) {
 		const message = (error as Error).message ?? 'Verbindung zum Server fehlgeschlagen.'
 		console.error(message)
@@ -85,10 +91,8 @@ const addRoom = async () => {
 	if (!state.authUser) return
 
 	try {
-		const { data, error }: PostgrestSingleResponse<Room[]> = await supabase
-			.from('rooms')
-			.insert({ user_id: state.authUser.id })
-			.select()
+		const payload = { user_id: state.authUser.id }
+		const { data, error }: PostgrestSingleResponse<Room[]> = await supabase.from('rooms').insert(payload).select()
 		if (error) throw error
 		if (data === null) throw new Error('Verbindung zur Datenbank fehlgeschlagen.')
 
@@ -99,20 +103,46 @@ const addRoom = async () => {
 	}
 }
 
-// const updateRoom = async (id: number, data: Room) => {
-// 	try {
-// 		const { error } = await supabase.from('rooms').update(data).eq('id', id) /* .select() */
-// 		if (error) throw error
-// 	} catch (error) {
-// 		const message = (error as Error).message ?? 'Verbindung zum Server fehlgeschlagen.'
-// 		console.error(message)
-// 	}
-// }
+const startStory = async (story: string) => {
+	if (!state.authUser || !state.room) return
 
-const fetchStoryPoints = async (roomId: number) => {
+	try {
+		const payload = { story, voting_enabled: true, version: state.room.version + 1 }
+		const [{ error }, { error: anotherError }] = await Promise.all([
+			supabase.from('rooms').update(payload).eq('id', state.room.id),
+			supabase.from('storypoints').delete().eq('room_id', state.room.id),
+		])
+		if (error) throw error
+		if (anotherError) throw anotherError
+	} catch (error) {
+		const message = (error as Error).message ?? 'Verbindung zum Server fehlgeschlagen.'
+		console.error(message)
+	}
+}
+
+const toggleVoting = async () => {
+	if (!state.authUser || !state.room) return
+
+	try {
+		const payload = { voting_enabled: !state.room.voting_enabled }
+		const { error } = await supabase.from('rooms').update(payload).eq('id', state.room.id)
+		if (error) throw error
+	} catch (error) {
+		const message = (error as Error).message ?? 'Verbindung zum Server fehlgeschlagen.'
+		console.error(message)
+	}
+}
+
+const fetchStoryPoints = async () => {
+	if (!state.room) return
+
 	try {
 		const { data, error /* , status */ }: PostgrestSingleResponse<Pick<StoryPointsTable, 'user_id' | 'vote'>[]> =
-			await supabase.from('storypoints').select('user_id, vote').eq('room_id', roomId).order('id', { ascending: false })
+			await supabase
+				.from('storypoints')
+				.select('user_id, vote')
+				.eq('room_id', state.room.id)
+				.order('id', { ascending: false })
 
 		if (error) throw error
 		if (data === null) throw new Error('Verbindung zur Datenbank fehlgeschlagen.')
@@ -128,10 +158,12 @@ const fetchStoryPoints = async (roomId: number) => {
 	}
 }
 
-const addStoryPoints = async (roomId: number, uuid: StoredPlayer['uuid'], storyPoints: string) => {
+const addVote = async (uuid: StoredPlayer['uuid'], vote: string) => {
+	if (!state.room?.voting_enabled) return
+
 	try {
-		const { error } = await supabase.from('storypoints').insert({ room_id: roomId, user_id: uuid, vote: storyPoints })
-		// .select()
+		const payload = { room_id: state.room.id, user_id: uuid, vote }
+		const { error } = await supabase.from('storypoints').insert(payload)
 		if (error) throw error
 	} catch (error) {
 		const message = (error as Error).message ?? 'Verbindung zum Server fehlgeschlagen.'
@@ -146,9 +178,10 @@ export const useStore = () => ({
 	setAuthState,
 	realtimeSubscribe,
 	realtimeUnsubscribe,
-	fetchRooms,
+	fetchRoom,
 	addRoom,
-	// updateRoom,
+	startStory,
+	toggleVoting,
 	fetchStoryPoints,
-	addStoryPoints,
+	addVote,
 })
