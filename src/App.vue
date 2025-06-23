@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { watch } from 'vue'
+import { useRoute, useRouter, type LocationQueryValue } from 'vue-router'
 import { supabase } from './supabase'
 import { useRoomStore } from '@/store/rooms'
 
-const { setAuthState } = useRoomStore()
+const route = useRoute()
+const router = useRouter()
+const { state, setAuthState } = useRoomStore()
 
 const logout = async () => {
 	try {
@@ -16,15 +20,28 @@ const logout = async () => {
 supabase.auth.onAuthStateChange((_, session) => {
 	setAuthState(session !== null)
 })
+
+watch(
+	() => state.isAuthenticated,
+	async isLoggedIn => {
+		await router.isReady()
+
+		if (isLoggedIn && route.name === 'login') {
+			router.replace((route.query.redirectTo as LocationQueryValue) ?? '/')
+			return
+		}
+	},
+)
 </script>
 
 <template>
 	<header>
 		<img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
-		<nav>
+		<nav class="flex flex-wrap gap-x-2">
 			<RouterLink to="/">Home</RouterLink>
-			<!-- <RouterLink to="/about">About</RouterLink> -->
+			<button v-if="state.isAuthenticated" type="button" @click="logout">Logout</button>
+			<RouterLink v-else to="/login">Login</RouterLink>
 		</nav>
 	</header>
 

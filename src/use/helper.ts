@@ -1,4 +1,4 @@
-import { inject, type InjectionKey } from 'vue'
+import { inject, unref, type InjectionKey, type Ref } from 'vue'
 
 // https://logaretm.com/blog/type-safe-provide-inject/
 const injectStrict = <T>(key: InjectionKey<T>, fallback?: T) => {
@@ -35,4 +35,6 @@ const formatDate = (
 // available across browsers since March 2022
 const createUuid = () => window.crypto.randomUUID()
 
-export { injectStrict, formatDate, /* formatTime, */ /* formatCount, */ createUuid }
+const isEmpty = (...args: (Ref<string> | string)[]) => args.some(val => !unref(val).length)
+
+export { injectStrict, formatDate, /* formatTime, */ /* formatCount, */ createUuid, isEmpty }

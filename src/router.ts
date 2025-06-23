@@ -20,10 +20,16 @@ const router = createRouter({
 		// },
 		{
 			path: '/:id',
-			name: 'view-room',
+			name: 'room',
 			// component: () => import('./views/RoomView.vue'),
 			component: RoomView,
 		},
+		{
+			path: '/login',
+			name: 'login',
+			component: () => import('./views/LoginView.vue'),
+		},
+		{ path: '/:pathMatch(.*)*', redirect: { name: 'home' } },
 	],
 })
 

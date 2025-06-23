@@ -7,16 +7,18 @@ import { injectStrict } from '@/use/helper'
 const router = useRouter()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
-const { addEntry } = useRoomStore()
+const { state, addEntry } = useRoomStore()
 
 const createRoom = async () => {
 	const { id } = await addEntry()
-	router.push({ name: 'view-room', params: { id: sqids.encode([id]) } })
+	router.push({ name: 'room', params: { id: sqids.encode([id]) } })
 }
 </script>
 
 <template>
 	<main>
-		<button type="button" @click="createRoom">Raum anlegen</button>
+		<template v-if="state.isAuthenticated">
+			<button type="button" @click="createRoom">Neuen Raum anlegen</button>
+		</template>
 	</main>
 </template>
