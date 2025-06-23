@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useRoomStore } from '@/store/rooms'
+import { useStore } from '@/use/store'
 import { PROVIDE_SQIDS } from '@/keys'
 import { useFormHandling } from '@/use/formHandling'
 import { injectStrict } from '@/use/helper'
@@ -8,7 +8,7 @@ import { injectStrict } from '@/use/helper'
 const router = useRouter()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
-const { isAuthenticated, addEntry } = useRoomStore()
+const { isAuthenticated, addRoom } = useStore()
 
 const { isSubmitLocked, beforeSubmit } = useFormHandling()
 
@@ -16,8 +16,9 @@ const createRoom = async () => {
 	if (isSubmitLocked.value) return
 
 	beforeSubmit()
-	const { id } = await addEntry()
-	router.push({ name: 'room', params: { id: sqids.encode([id]) } })
+	const room = await addRoom()
+	if (!room) return
+	router.push({ name: 'room', params: { id: sqids.encode([room.id]) } })
 }
 </script>
 

@@ -2,11 +2,11 @@
 import { watch } from 'vue'
 import { useRoute, useRouter, type LocationQueryValue } from 'vue-router'
 import { supabase } from './supabase'
-import { useRoomStore } from '@/store/rooms'
+import { useStore } from '@/use/store'
 
 const route = useRoute()
 const router = useRouter()
-const { isAuthenticated, setAuthState } = useRoomStore()
+const { isAuthenticated, setAuthState } = useStore()
 
 const logout = async () => {
 	try {

@@ -2,8 +2,8 @@
 import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
 import PokerButtons from '@/components/PokerButtons.vue'
-import { useRoomStore } from '@/store/rooms'
-import { usePlayerStore } from '@/store/players'
+import { useStore } from '@/use/store'
+import { usePlayers } from '@/use/players'
 import type { Room } from '@/types/Room.type'
 import type { StoredPlayer } from '@/types/Player.type'
 import { PROVIDE_SQIDS } from '@/keys'
@@ -13,7 +13,7 @@ import { injectStrict, createUuid, formatDate, isEmpty } from '@/use/helper'
 const route = useRoute()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
-const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useRoomStore()
+const { state, realtimeSubscribe, realtimeUnsubscribe, fetchRooms, fetchStoryPoints, addStoryPoints } = useStore()
 
 const { isSubmitLocked, beforeSubmit } = useFormHandling()
 
@@ -24,21 +24,23 @@ onBeforeUnmount(() => {
 
 const _roomId = sqids.decode(route.params.id as RouteParamValue).at(0)
 const room = ref<Room | null | undefined>(null)
-const _getRoom = async () => {
-	await fetchEntries()
+const _setupRoom = async () => {
+	await fetchRooms()
 	room.value = state.rooms.find(item => item.id === _roomId)
+
+	if (room.value) await fetchStoryPoints(room.value.id)
 }
 watch(
 	() => state.subscribed,
 	_subscribed => {
-		if (_subscribed) _getRoom()
+		if (_subscribed) _setupRoom()
 	},
 )
 
-const { joinChannel, leaveChannel, hasJoined, playersOnline, storyPoints } = usePlayerStore()
+const { joinChannel, leaveChannel, myUuid, playersOnline } = usePlayers()
 
 const _nameRestored = ref(false)
-const showForm = computed(() => !(_nameRestored.value || hasJoined.value))
+const showForm = computed(() => !(_nameRestored.value || myUuid.value))
 
 // @ts-expect-error JSON.parse(null) returns null
 const storedUser: StoredPlayer | null = JSON.parse(window.localStorage.getItem('ocmScrumPoker'))
@@ -72,6 +74,11 @@ const onSubmitName = () => {
 onBeforeUnmount(() => {
 	leaveChannel()
 })
+
+const onVote = (storyPoints: string) => {
+	if (!room.value) return
+	addStoryPoints(room.value.id, myUuid.value, storyPoints)
+}
 </script>
 
 <template>
@@ -82,7 +89,7 @@ onBeforeUnmount(() => {
 			<pre class="text-xs">{{ room }}</pre>
 
 			<template v-if="playersOnline.size">
-				<PokerButtons />
+				<PokerButtons @vote="onVote" />
 
 				<!-- <pre class="text-xs">{{ playersOnline }}</pre> -->
 				<table>
@@ -96,11 +103,11 @@ onBeforeUnmount(() => {
 					<tbody>
 						<tr v-for="[key, player] of playersOnline" :key="key">
 							<td>
-								{{ player.name }} <span v-if="state.authUser?.id === player.uuid">⭐️</span>
+								{{ player.name }} <span v-if="player.uuid === room.user_id">⭐️</span>
 								<small>({{ formatDate(player.online_at, { time: true }) }})</small>
 							</td>
 							<td>
-								{{ storyPoints.get(player.uuid) }}
+								{{ state.storyPoints.get(player.uuid) }}
 							</td>
 						</tr>
 					</tbody>

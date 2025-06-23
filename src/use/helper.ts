@@ -35,6 +35,12 @@ const formatDate = (
 // available across browsers since March 2022
 const createUuid = () => window.crypto.randomUUID()
 
-const isEmpty = (...args: (Ref<string> | string)[]) => args.some(val => !unref(val).length)
+/**
+ * Checks if any of the provided arguments are empty.
+ *
+ * @param {...string|Ref<string>} args The arguments to check.
+ * @returns {boolean} Returns true if any argument is empty, otherwise false.
+ */
+const isEmpty = (...args: (Ref<string> | string)[]): boolean => args.some(val => !unref(val).length)
 
 export { injectStrict, formatDate, /* formatTime, */ /* formatCount, */ createUuid, isEmpty }
