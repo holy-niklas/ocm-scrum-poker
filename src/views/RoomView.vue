@@ -3,9 +3,9 @@ import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
 import PokerButtons from '@/components/PokerButtons.vue'
 import { useRoomStore } from '@/store/rooms'
-import { useUserStore } from '@/store/users'
+import { usePlayerStore } from '@/store/players'
 import type { Room } from '@/types/Room.type'
-import type { StoredUser } from '@/types/User.type'
+import type { StoredPlayer } from '@/types/Player.type'
 import { PROVIDE_SQIDS } from '@/keys'
 import { injectStrict, createUuid, formatDate } from '@/use/helper'
 
@@ -32,13 +32,13 @@ watch(
 	},
 )
 
-const { joinChannel, leaveChannel, hasJoined, usersOnline, userStoryPoints } = useUserStore()
+const { joinChannel, leaveChannel, hasJoined, playersOnline, storyPoints } = usePlayerStore()
 
 const _nameRestored = ref(false)
 const showForm = computed(() => !(_nameRestored.value || hasJoined.value))
 
 // @ts-expect-error JSON.parse(null) returns null
-const storedUser: StoredUser | null = JSON.parse(window.localStorage.getItem('ocmScrumPoker'))
+const storedUser: StoredPlayer | null = JSON.parse(window.localStorage.getItem('ocmScrumPoker'))
 const name = ref(storedUser?.name ?? '')
 const _onNameRestored = () => {
 	if (!storedUser) return
@@ -58,7 +58,7 @@ const onSubmitName = () => {
 	if (isSubmitLocked.value || !name.value) return
 	isSubmitLocked.value = true
 	try {
-		const userData: StoredUser = { name: name.value, uuid: createUuid() }
+		const userData: StoredPlayer = { name: name.value, uuid: createUuid() }
 		joinChannel(userData)
 		window.localStorage.setItem('ocmScrumPoker', JSON.stringify(userData))
 	} catch (error) {
@@ -79,12 +79,12 @@ onBeforeUnmount(() => {
 			<h1 class="text-2xl font-bold">Room {{ room.id }}</h1>
 			<p>Erstellt am: {{ room.created_at }}</p>
 
-			<template v-if="usersOnline.size">
+			<template v-if="playersOnline.size">
 				<PokerButtons />
 
-				<pre class="text-xs">{{ usersOnline }}</pre>
+				<pre class="text-xs">{{ playersOnline }}</pre>
 				<!-- <ul>
-					<li v-for="[key, user] of usersOnline" :key="key">
+					<li v-for="[key, user] of playersOnline" :key="key">
 						{{ user.name }}: {{ formatDate(user.online_at, { time: true }) }}
 					</li>
 				</ul> -->
@@ -97,13 +97,13 @@ onBeforeUnmount(() => {
 					</thead>
 
 					<tbody>
-						<tr v-for="[key, user] of usersOnline" :key="key">
+						<tr v-for="[key, user] of playersOnline" :key="key">
 							<td>
 								{{ user.name }}
-								<small class="text-xs">({{ formatDate(user.online_at, { time: true }) }})</small>
+								<small>({{ formatDate(user.online_at, { time: true }) }})</small>
 							</td>
 							<td>
-								{{ userStoryPoints.get(user.uuid) }}
+								{{ storyPoints.get(user.uuid) }}
 							</td>
 						</tr>
 					</tbody>

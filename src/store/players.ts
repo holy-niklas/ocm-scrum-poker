@@ -1,22 +1,22 @@
 import { ref, computed, readonly } from 'vue'
 import { supabase } from '@/supabase'
-import type { UserOnline, StoredUser } from '@/types/User.type'
+import type { Player, StoredPlayer } from '@/types/Player.type'
 import type { REALTIME_LISTEN_TYPES } from '@supabase/supabase-js'
 
 const _uuid = ref('')
 const hasJoined = computed(() => _uuid.value !== '')
-const usersOnline = ref<Map<string, UserOnline>>(new Map())
+const playersOnline = ref<Map<string, Player>>(new Map())
 
 const channel = supabase.channel('poker')
 channel.on('presence', { event: 'sync' }, () => {
-	usersOnline.value.clear()
+	playersOnline.value.clear()
 	Object.values(channel.presenceState()).forEach(presence => {
 		const { presence_ref, ...entry } = presence[0]
-		usersOnline.value.set(presence_ref, entry as UserOnline)
+		playersOnline.value.set(presence_ref, entry as Player)
 	})
 })
 
-const joinChannel = (userData: StoredUser) => {
+const joinChannel = (userData: StoredPlayer) => {
 	channel.subscribe(async (status, error) => {
 		if (error) throw error
 		if (status !== 'SUBSCRIBED') return
@@ -35,11 +35,11 @@ type BroadCastPayload = {
 	type: `${REALTIME_LISTEN_TYPES.BROADCAST}`
 	event: string
 }
-const userStoryPoints = ref<Map<string, string>>(new Map())
+const storyPoints = ref<Map<string, string>>(new Map())
 const onMessageReceived = ({ payload }: BroadCastPayload) => {
 	if (!payload.uuid || !payload.storyPoints) return
 
-	userStoryPoints.value.set(payload.uuid, payload.storyPoints)
+	storyPoints.value.set(payload.uuid, payload.storyPoints)
 }
 channel.on(
 	'broadcast',
@@ -47,22 +47,22 @@ channel.on(
 	payload => onMessageReceived(payload),
 )
 
-const vote = async (storyPoints: string) => {
+const vote = async (myStoryPoints: string) => {
 	if (!hasJoined.value) return
 
-	userStoryPoints.value.set(_uuid.value, storyPoints)
+	storyPoints.value.set(_uuid.value, myStoryPoints)
 	channel.send({
 		type: 'broadcast',
 		event: 'shout',
-		payload: { uuid: _uuid.value, storyPoints },
+		payload: { uuid: _uuid.value, _storyPoints: myStoryPoints },
 	})
 }
 
-export const useUserStore = () => ({
+export const usePlayerStore = () => ({
 	hasJoined,
-	usersOnline: readonly(usersOnline),
+	playersOnline: readonly(playersOnline),
 	joinChannel,
 	leaveChannel,
-	userStoryPoints: readonly(userStoryPoints),
+	storyPoints: readonly(storyPoints),
 	vote,
 })

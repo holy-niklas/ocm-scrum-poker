@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useUserStore } from '@/store/users'
+import { usePlayerStore } from '@/store/players'
 
-const { vote } = useUserStore()
+const { vote } = usePlayerStore()
 
 const storyPointList = ['?', '☕️', '1', '2', '3', '5', '8', '13', '20', '40', '100']
 </script>
