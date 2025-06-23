@@ -81,7 +81,7 @@ const setAuthState = (isAuthenticated = false) => {
 }
 
 // Singleton State Pattern, see https://markus.oberlehner.net/blog/vue-composition-api-composables/#the-singleton-state-pattern
-export const useStore = () => ({
+export const useRoomStore = () => ({
 	state: readonly(state),
 	realtimeSubscribe,
 	realtimeUnsubscribe,

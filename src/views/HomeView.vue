@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useStore } from '@/use/store'
+import { useRoomStore } from '@/store/rooms'
 import { PROVIDE_SQIDS } from '@/keys'
 import { injectStrict } from '@/use/helper'
 
 const router = useRouter()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
-const { addEntry } = useStore()
+const { addEntry } = useRoomStore()
 
 const createRoom = async () => {
 	const { id } = await addEntry()

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
-import { useStore } from '@/use/store'
-import { usePresence } from '@/use/presence'
+import PokerButtons from '@/components/PokerButtons.vue'
+import { useRoomStore } from '@/store/rooms'
+import { useUserStore } from '@/store/users'
 import type { Room } from '@/types/Room.type'
 import type { StoredUser } from '@/types/User.type'
 import { PROVIDE_SQIDS } from '@/keys'
@@ -11,7 +12,7 @@ import { injectStrict, createUuid, formatDate } from '@/use/helper'
 const route = useRoute()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
-const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useStore()
+const { state, realtimeSubscribe, realtimeUnsubscribe, fetchEntries } = useRoomStore()
 
 realtimeSubscribe()
 onBeforeUnmount(() => {
@@ -31,7 +32,7 @@ watch(
 	},
 )
 
-const { joinChannel, leaveChannel, hasJoined, usersOnline } = usePresence()
+const { joinChannel, leaveChannel, hasJoined, usersOnline, userStoryPoints } = useUserStore()
 
 const _nameRestored = ref(false)
 const showForm = computed(() => !(_nameRestored.value || hasJoined.value))
@@ -79,12 +80,34 @@ onBeforeUnmount(() => {
 			<p>Erstellt am: {{ room.created_at }}</p>
 
 			<template v-if="usersOnline.size">
+				<PokerButtons />
+
 				<pre class="text-xs">{{ usersOnline }}</pre>
-				<ul>
+				<!-- <ul>
 					<li v-for="[key, user] of usersOnline" :key="key">
 						{{ user.name }}: {{ formatDate(user.online_at, { time: true }) }}
 					</li>
-				</ul>
+				</ul> -->
+				<table>
+					<thead>
+						<tr>
+							<th>User</th>
+							<th>Storypoints</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<tr v-for="[key, user] of usersOnline" :key="key">
+							<td>
+								{{ user.name }}
+								<small class="text-xs">({{ formatDate(user.online_at, { time: true }) }})</small>
+							</td>
+							<td>
+								{{ userStoryPoints.get(user.uuid) }}
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</template>
 
 			<form v-if="showForm" @submit.prevent="onSubmitName">

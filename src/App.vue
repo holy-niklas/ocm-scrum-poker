@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { supabase } from './supabase'
-import { useStore } from './use/store'
+import { useRoomStore } from '@/store/rooms'
 
-const { setAuthState } = useStore()
+const { setAuthState } = useRoomStore()
 
 const logout = async () => {
 	try {

@@ -32,6 +32,7 @@ const formatDate = (
 
 // const formatCount = (count: number, noun: [string, string]) => `${count} ${noun[count === 1 ? 0 : 1]}`
 
-const createUuid = () => `_${Math.random().toString(36).substring(2, 10)}`
+// available across browsers since March 2022
+const createUuid = () => window.crypto.randomUUID()
 
 export { injectStrict, formatDate, /* formatTime, */ /* formatCount, */ createUuid }
