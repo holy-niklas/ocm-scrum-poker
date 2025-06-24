@@ -129,7 +129,6 @@ button {
 }
 
 input {
-	background-color: oklch(0.92 0 0);
 	border: 1px solid currentColor;
 	padding: 0.25rem 0.5rem;
 }

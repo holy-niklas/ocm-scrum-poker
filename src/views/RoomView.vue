@@ -95,7 +95,7 @@ onBeforeUnmount(() => {
 <template>
 	<main class="main container">
 		<template v-if="state.room">
-			<h1 class="text-2xl font-bold">{{ state.room.story }}</h1>
+			<h1 class="text-2xl font-medium">{{ state.room.story }}</h1>
 			<pre class="text-xs">{{ state.room }}</pre>
 
 			<template v-if="state.authUser">

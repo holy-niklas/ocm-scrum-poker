@@ -6,6 +6,9 @@ import { useStore } from '@/use/store'
 
 const route = useRoute()
 const router = useRouter()
+
+const APP_NAME: string = import.meta.env.VITE_APP_NAME
+
 const { state, isAuthenticated, setAuthState } = useStore()
 
 const logout = async () => {
@@ -35,8 +38,8 @@ watch(isAuthenticated, async isLoggedIn => {
 	<header class="header shadow-md">
 		<div class="container grid items-center gap-x-2" :class="route.params.id ? 'grid-cols-3' : 'grid-cols-[1fr_auto]'">
 			<RouterLink class="site-link" to="/">
-				<img alt="OCM Scrum Poker" class="size-10 max-w-none" src="@/assets/logo.svg" width="40" height="40" />
-				<span :class="{ '<sm:hidden': route.params.id }" aria-hidden="true">OCM Scrum Poker</span>
+				<img :alt="APP_NAME" class="size-10 max-w-none" src="@/assets/logo.svg" width="40" height="40" />
+				<span :class="{ '<sm:hidden': route.params.id }" aria-hidden="true">{{ APP_NAME }}</span>
 			</RouterLink>
 
 			<div v-if="route.params.id" class="text-center">

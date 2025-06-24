@@ -49,7 +49,7 @@ const getStoryPoints = (uuid: string) => {
 	}
 
 	th {
-		font-weight: 600;
+		font-weight: 500;
 		text-align: left;
 	}
 
