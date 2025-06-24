@@ -23,7 +23,7 @@ const createRoom = async () => {
 </script>
 
 <template>
-	<main>
+	<main class="main container">
 		<template v-if="isAuthenticated">
 			<button type="button" :aria-disabled="isSubmitLocked" @click="createRoom">Neuen Raum anlegen</button>
 		</template>

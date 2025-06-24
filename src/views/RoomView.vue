@@ -2,12 +2,13 @@
 import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
 import PokerButtons from '@/components/PokerButtons.vue'
+import PlayerList from '@/components/PlayerList.vue'
 import { useStore } from '@/use/store'
 import { usePlayers } from '@/use/players'
 import type { StoredPlayer } from '@/types/Player.type'
 import { PROVIDE_SQIDS } from '@/keys'
 import { useFormHandling } from '@/use/formHandling'
-import { injectStrict, createUuid, formatDate, isEmpty } from '@/use/helper'
+import { injectStrict, createUuid, isEmpty } from '@/use/helper'
 
 const route = useRoute()
 
@@ -89,18 +90,12 @@ const onSubmitName = () => {
 onBeforeUnmount(() => {
 	leaveChannel()
 })
-
-const getStoryPoints = (uuid: string) => {
-	const storyPoints = state.storyPoints.get(uuid)
-	return storyPoints && state.room?.voting_enabled ? '🙈' : storyPoints
-}
 </script>
 
 <template>
-	<main>
+	<main class="main container">
 		<template v-if="state.room">
-			<h1 class="text-2xl font-bold">Room {{ state.room.id }}</h1>
-			<div class="empty:hidden">{{ state.room.story }}</div>
+			<h1 class="text-2xl font-bold">{{ state.room.story }}</h1>
 			<pre class="text-xs">{{ state.room }}</pre>
 
 			<template v-if="state.authUser">
@@ -119,29 +114,10 @@ const getStoryPoints = (uuid: string) => {
 
 			<template v-if="playersOnline.size">
 				<!-- <pre class="text-xs">{{ state.storyPoints }}</pre> -->
-				<PokerButtons :my-uuid />
+				<PokerButtons class="py-8" :my-uuid />
 
 				<!-- <pre class="text-xs">{{ playersOnline }}</pre> -->
-				<table>
-					<thead>
-						<tr>
-							<th>User</th>
-							<th>Storypoints</th>
-						</tr>
-					</thead>
-
-					<tbody>
-						<tr v-for="[key, player] of playersOnline" :key="key">
-							<td>
-								{{ player.name }} <span v-if="player.uuid === state.room.user_id">⭐️</span>
-								<small>({{ formatDate(player.online_at, { time: true }) }})</small>
-							</td>
-							<td>
-								{{ getStoryPoints(player.uuid) }}
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<PlayerList />
 			</template>
 
 			<form v-if="showForm" @submit.prevent="onSubmitName">

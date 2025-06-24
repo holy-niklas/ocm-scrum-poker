@@ -6,7 +6,7 @@ import { useStore } from '@/use/store'
 
 const route = useRoute()
 const router = useRouter()
-const { isAuthenticated, setAuthState } = useStore()
+const { state, isAuthenticated, setAuthState } = useStore()
 
 const logout = async () => {
 	try {
@@ -32,14 +32,20 @@ watch(isAuthenticated, async isLoggedIn => {
 </script>
 
 <template>
-	<header>
-		<img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+	<header class="header shadow-md">
+		<div class="container grid items-center gap-x-2" :class="route.params.id ? 'grid-cols-3' : 'grid-cols-[1fr_auto]'">
+			<RouterLink class="site-link" to="/">
+				<img alt="OCM Scrum Poker" class="size-10 max-w-none" src="@/assets/logo.svg" width="40" height="40" />
+				<span :class="{ '<sm:hidden': route.params.id }" aria-hidden="true">OCM Scrum Poker</span>
+			</RouterLink>
 
-		<nav class="flex flex-wrap gap-x-2">
-			<RouterLink to="/">Home</RouterLink>
-			<button v-if="isAuthenticated" type="button" @click="logout">Logout</button>
-			<RouterLink v-else to="/login">Login</RouterLink>
-		</nav>
+			<div v-if="route.params.id" class="text-center">
+				<template v-if="state.room">Room {{ state.room.id }}</template>
+			</div>
+
+			<button v-if="isAuthenticated" type="button" class="justify-self-end" @click="logout">Logout</button>
+			<RouterLink v-else class="justify-self-end" to="/login">Login</RouterLink>
+		</div>
 	</header>
 
 	<RouterView />

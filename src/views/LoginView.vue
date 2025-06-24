@@ -4,7 +4,7 @@ import LoginWithGithub from '@/components/LoginWithGithub.vue'
 </script>
 
 <template>
-	<main>
+	<main class="main container">
 		<h1>Login</h1>
 
 		<LoginWithEmail />

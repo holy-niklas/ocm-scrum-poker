@@ -21,7 +21,9 @@ export default defineConfig({
 		],
 	],
 
-	// shortcuts: {},
+	shortcuts: {
+		container: 'max-w-6xl px-4 mx-auto',
+	},
 
 	// https://unocss.dev/presets/mini
 	presets: [presetMini()],

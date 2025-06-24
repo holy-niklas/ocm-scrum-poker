@@ -16,6 +16,9 @@ channel.on('presence', { event: 'sync' }, () => {
 })
 
 const joinChannel = (userData: StoredPlayer) => {
+	// already joined
+	if (!!myUuid.value) return
+
 	channel.subscribe(async (status, error) => {
 		if (error) throw error
 		if (status !== 'SUBSCRIBED') return
