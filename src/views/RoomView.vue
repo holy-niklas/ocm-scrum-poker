@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeMount, onBeforeUnmount, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRoute, type RouteParamValue } from 'vue-router'
 import PokerButtons from '@/components/PokerButtons.vue'
 import PlayerList from '@/components/PlayerList.vue'
+import NicknameDialog from '@/components/NicknameDialog.vue'
 import { useStore } from '@/use/store'
 import { usePlayers } from '@/use/players'
-import type { StoredPlayer } from '@/types/Player.type'
 import { PROVIDE_SQIDS } from '@/keys'
 import { useFormHandling } from '@/use/formHandling'
-import { injectStrict, createUuid, isEmpty } from '@/use/helper'
+import { injectStrict, isEmpty } from '@/use/helper'
 
 const route = useRoute()
 
 const sqids = injectStrict(PROVIDE_SQIDS)
 const { state, realtimeSubscribe, realtimeUnsubscribe, fetchRoom, startStory, toggleVoting, fetchStoryPoints } =
 	useStore()
-
-const { isSubmitLocked, beforeSubmit, unlockSubmit } = useFormHandling()
+const { leaveChannel, myUuid, playersOnline } = usePlayers()
 
 realtimeSubscribe()
 onBeforeUnmount(() => {
@@ -34,25 +33,8 @@ watch(
 	},
 )
 
-const { joinChannel, leaveChannel, myUuid, playersOnline } = usePlayers()
-
-const _nameRestored = ref(false)
-const showForm = computed(() => !(_nameRestored.value || myUuid.value))
-
-// @ts-expect-error JSON.parse(null) returns null
-const storedUser: StoredPlayer | null = JSON.parse(window.localStorage.getItem('ocmScrumPoker'))
-const name = ref(storedUser?.name ?? '')
-const _onNameRestored = () => {
-	if (!storedUser) return
-	_nameRestored.value = true
-	try {
-		joinChannel(storedUser)
-	} catch (error) {
-		console.error('Error joining channel.', error)
-	}
-}
-onBeforeMount(() => {
-	_onNameRestored()
+onBeforeUnmount(() => {
+	leaveChannel()
 })
 
 const story = ref('')
@@ -62,6 +44,8 @@ watch(
 		story.value = _story ?? ''
 	},
 )
+
+const { isSubmitLocked, beforeSubmit, unlockSubmit } = useFormHandling()
 const isSubmitStoryLocked = computed(
 	() => isSubmitLocked.value || isEmpty(story.value) || story.value === state.room?.story,
 )
@@ -72,24 +56,6 @@ const onStartStory = async () => {
 	await startStory(story.value)
 	unlockSubmit()
 }
-
-const isSubmitNameLocked = computed(() => isSubmitLocked.value || isEmpty(name.value))
-const onSubmitName = () => {
-	if (isSubmitNameLocked.value) return
-
-	beforeSubmit()
-	try {
-		const userData: StoredPlayer = { name: name.value, uuid: state.authUser?.id ?? createUuid() }
-		joinChannel(userData)
-		window.localStorage.setItem('ocmScrumPoker', JSON.stringify(userData))
-	} catch (error) {
-		console.error('Error joining channel / writing to local storage.', error)
-	}
-}
-
-onBeforeUnmount(() => {
-	leaveChannel()
-})
 </script>
 
 <template>
@@ -120,13 +86,7 @@ onBeforeUnmount(() => {
 				<PlayerList />
 			</template>
 
-			<form v-if="showForm" @submit.prevent="onSubmitName">
-				<div>
-					<label for="name">Stranger, what's your name?</label>
-					<input type="text" id="name" v-model.trim="name" />
-				</div>
-				<button type="submit" :aria-disabled="isSubmitNameLocked">Ok</button>
-			</form>
+			<NicknameDialog :auth-user-id="state.authUser?.id" />
 		</template>
 
 		<template v-else>
