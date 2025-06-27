@@ -47,7 +47,7 @@ export default defineConfigWithVueTs(
 
 	{
 		...pluginVitest.configs.recommended,
-		files: ['tests/**/*'],
+		files: ['src/**/__tests__/*'],
 	},
 	skipFormatting,
 )

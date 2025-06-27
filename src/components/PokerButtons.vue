@@ -30,13 +30,24 @@ const average = computed(() => {
 
 <template>
 	<div>
-		<div class="mb-4 font-medium" :class="{ invisible: !votingFinished }">Durchschnitt: {{ average }}</div>
+		<div class="mb-4 font-medium" :class="{ invisible: !votingFinished }" data-test-average>
+			Durchschnitt: {{ average }}
+		</div>
 
 		<ul class="flex flex-wrap justify-center gap-4">
 			<li v-for="(storyPoints, i) in STORY_POINT_LIST" :key="i">
-				<button type="button" class="poker-button" :data-points="storyPoints" @click="addVote(myUuid, storyPoints)">
+				<button
+					type="button"
+					class="poker-button"
+					:aria-disabled="votingFinished"
+					:data-points="storyPoints"
+					data-test-poker-button
+					@click="addVote(myUuid, storyPoints)"
+				>
 					{{ storyPoints }}
-					<span v-if="votingFinished" class="distribution" aria-hidden="true">{{ distribution.get(storyPoints) }}</span>
+					<span v-if="votingFinished" class="distribution" aria-hidden="true" data-test-distribution>{{
+						distribution.get(storyPoints)
+					}}</span>
 				</button>
 			</li>
 		</ul>
