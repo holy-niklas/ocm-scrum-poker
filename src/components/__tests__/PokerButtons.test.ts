@@ -53,7 +53,7 @@ describe('PokerButtons.vue', () => {
 		expect(pokerButtons.length).toBe(STORY_POINT_LIST.length)
 
 		const index = 5
-		expect(pokerButtons.at(index)?.text()).toBe(STORY_POINT_LIST.at(index))
+		expect(pokerButtons.at(index)?.attributes('aria-label')).toBe(STORY_POINT_LIST.at(index))
 
 		const averageEl = getAverageElement()
 		expect(averageEl.classes('invisible')).toBe(true)

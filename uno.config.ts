@@ -22,7 +22,7 @@ export default defineConfig({
 	],
 
 	shortcuts: {
-		container: 'max-w-6xl px-4 mx-auto',
+		container: 'max-w-7xl px-4 mx-auto',
 	},
 
 	// https://unocss.dev/presets/mini
