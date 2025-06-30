@@ -12,7 +12,7 @@ const signIn = async () => {
 </script>
 
 <template>
-	<h2>mit GitHub</h2>
+	<h2 class="mb-2 text-lg font-medium">mit GitHub</h2>
 
 	<button @click="signIn">Login with GitHub</button>
 </template>

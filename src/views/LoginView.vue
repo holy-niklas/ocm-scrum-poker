@@ -5,10 +5,11 @@ import LoginWithGithub from '@/components/LoginWithGithub.vue'
 
 <template>
 	<main class="main container">
-		<h1>Login</h1>
+		<h1 class="mb-6 text-2xl font-medium">Login</h1>
 
-		<LoginWithEmail />
-
-		<LoginWithGithub />
+		<div class="grid gap-8">
+			<div><LoginWithEmail /></div>
+			<div><LoginWithGithub /></div>
+		</div>
 	</main>
 </template>

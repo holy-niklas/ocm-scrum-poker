@@ -21,7 +21,6 @@ const router = createRouter({
 		{
 			path: '/:id',
 			name: 'room',
-			// component: () => import('./views/RoomView.vue'),
 			component: RoomView,
 		},
 		{

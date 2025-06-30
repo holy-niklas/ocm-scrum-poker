@@ -62,13 +62,13 @@ const _onSubmitCode = async () => {
 </script>
 
 <template>
-	<h2>mit E-Mail-Adresse</h2>
+	<h2 class="mb-2 text-lg font-medium">mit E-Mail-Adresse</h2>
 
-	<form ref="formEl" novalidate @submit.prevent="onSubmit">
+	<form ref="formEl" novalidate @submit.prevent="onSubmit" data-test-form>
 		<div>
 			<template v-if="isFirstStep">
 				<label for="email">E-Mail</label>
-				<input v-model.trim="email" type="email" id="email" autocomplete="username" enterkeyhint="go" />
+				<input v-model.trim="email" type="email" id="email" autocomplete="username" enterkeyhint="go" data-test-input />
 			</template>
 
 			<template v-else>
@@ -82,11 +82,12 @@ const _onSubmitCode = async () => {
 					pattern="\d{6,6}"
 					autocomplete="one-time-code"
 					enterkeyhint="go"
+					data-test-input
 				/>
 			</template>
 		</div>
 
-		<button type="submit" :aria-disabled="isSubmitLocked">
+		<button type="submit" :aria-disabled="isSubmitLocked" data-test-button>
 			{{ isFirstStep ? 'Send password token' : 'Login' }}
 		</button>
 	</form>
