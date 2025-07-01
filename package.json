@@ -30,7 +30,7 @@
     "@types/node": "^24.0.8",
     "@unocss/reset": "^66.2.0",
     "@unocss/transformer-directives": "^66.2.0",
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@vitejs/plugin-vue": "^6.0.0",
     "@vitest/eslint-plugin": "^1.1.39",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.5.1",
